@@ -25,6 +25,8 @@ public class ChatBot extends TelegramLongPollingBot {
 
     private static final String BROADCAST = "broadcast ";
     private static final String LIST_USERS = "users";
+    private static final String DELETE_MY_ACCOUNT = "delete_my_account";
+    private static final String IS_ADMIN = "is_admin";
 
     @Value("${bot.name}")
     private String botName;
@@ -93,8 +95,22 @@ public class ChatBot extends TelegramLongPollingBot {
     }
 
     private boolean checkIfAdminCommand(User user, String text) {
-        if (user == null || !user.getAdmin())
+        if (user == null){
             return false;
+        }else {
+             if (text.equals(DELETE_MY_ACCOUNT)){
+                 LOGGER.info("Command received: " + DELETE_MY_ACCOUNT);
+                 if (user.getAdmin()){
+                     sendMessage(user.getChatId(), "Unable to delete Admin account!");
+                     LOGGER.info("Unable to delete Admin account!");
+                 }else{
+                     sendMessage(user.getChatId(), "Buy!");
+                     userService.delUser(user);
+                     LOGGER.info("User: " + user.getPhone() + "deleted!");
+                 }
+                 return true;
+             }
+        }
 
         if (text.startsWith(BROADCAST)) {
             LOGGER.info("Admin command received: " + BROADCAST);
@@ -108,8 +124,21 @@ public class ChatBot extends TelegramLongPollingBot {
 
             listUsers(user);
             return true;
+        } if (text.startsWith(IS_ADMIN)){
+            LOGGER.info("Admin command received: " + IS_ADMIN);
+            text = text.substring(IS_ADMIN.length()).trim();
+            User userToUpdate = userService.findByPhone(text);
+            if (userToUpdate != null){
+                userToUpdate.setAdmin(true);
+                userService.updateUser(userToUpdate);
+                sendMessage(user.getChatId(), "User: " + text + " is Admin now.");
+                sendMessage(userToUpdate.getChatId(), "You are Admin now.");
+                return true;
+            } else {
+                sendMessage(user.getChatId(), "User: " + text + " is not present!");
+                return true;
+            }
         }
-
         return false;
     }
 
@@ -127,7 +156,6 @@ public class ChatBot extends TelegramLongPollingBot {
     private void sendPhoto(long chatId) {
         InputStream is = getClass().getClassLoader()
                 .getResourceAsStream("test.png");
-
         SendPhoto message = new SendPhoto();
         message.setChatId(Long.toString(chatId));
         message.setPhoto(new InputFile(is, "test"));

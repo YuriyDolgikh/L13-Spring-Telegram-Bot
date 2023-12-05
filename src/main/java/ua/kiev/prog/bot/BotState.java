@@ -1,7 +1,11 @@
 package ua.kiev.prog.bot;
 
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+
+import java.io.InputStream;
 
 public enum BotState {
 
@@ -9,6 +13,7 @@ public enum BotState {
         @Override
         public void enter(BotContext context) {
             sendMessage(context, "Hello!");
+            sendHelloPhoto(context);
         }
 
         @Override
@@ -102,6 +107,20 @@ public enum BotState {
         SendMessage message = new SendMessage();
         message.setChatId(Long.toString(context.getUser().getChatId()));
         message.setText(text);
+        try {
+            context.getBot().execute(message);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+    }
+
+    protected void sendHelloPhoto(BotContext context) {
+        InputStream is = getClass().getClassLoader()
+                .getResourceAsStream("hello.png");
+
+        SendPhoto message = new SendPhoto();
+        message.setChatId(Long.toString(context.getUser().getChatId()));
+        message.setPhoto(new InputFile(is, "hello"));
         try {
             context.getBot().execute(message);
         } catch (TelegramApiException e) {

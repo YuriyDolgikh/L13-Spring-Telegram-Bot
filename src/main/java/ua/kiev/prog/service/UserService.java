@@ -22,6 +22,16 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
+    public User findByPhone(String phone) {
+        for (User user : findAllUsers()){
+            if (user.getPhone().equals(phone)){
+                return user;
+            }
+        }
+        return null;
+    }
+
+    @Transactional(readOnly = true)
     public List<User> findAllUsers() {
         return userRepository.findAll();
     }
@@ -46,5 +56,11 @@ public class UserService {
     public void updateUser(User user) {
         userRepository.save(user);
     }
+
+    @Transactional
+    public  void delUser(User user){
+        userRepository.delete(user);
+    }
+
 }
 
